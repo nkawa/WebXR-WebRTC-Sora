@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@webxr-input-profiles/motion-controllers": "^1.0.0"
+  }
+}

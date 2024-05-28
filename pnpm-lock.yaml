@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@webxr-input-profiles/motion-controllers':
+        specifier: ^1.0.0
+        version: 1.0.0
+
+packages:
+
+  '@webxr-input-profiles/motion-controllers@1.0.0':
+    resolution: {integrity: sha512-Ppxde+G1/QZbU8ShCQg+eq5VtlcL/FPkerF1dkDOLlIml0LJD1tFqnCZYR0SrHzYleIQ2siRnOx7xbFLaCpExQ==}
+
+snapshots:
+
+  '@webxr-input-profiles/motion-controllers@1.0.0': {}

@@ -4,7 +4,6 @@ import { Container, Row, Col, Button } from "react-bootstrap";
 
 import TopNavi from "../components/TopNavi";
 
-
 var hasRun: boolean = false;
 
 const Page = () => {
