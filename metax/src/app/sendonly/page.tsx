@@ -118,7 +118,7 @@ class SoraClient {
 
 const soraClient = new SoraClient(
   "sc01",
-  "wss://sora.uclab.jp/signaling",
+  "wss://sora2.uclab.jp/signaling",
   "sora",
   "",
   "token"

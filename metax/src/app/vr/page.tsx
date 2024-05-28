@@ -7,7 +7,7 @@ import Sora, {
   ConnectionSubscriber,
 } from "sora-js-sdk";
 
-import type { Navigator } from "@types/webxr";
+import type { Navigator } from "webxr";
 
 import { WebXRButton } from "../../vendor/util/webxr-button";
 
@@ -132,7 +132,7 @@ class SoraClient {
 
 const soraClient = new SoraClient(
   "sc01",
-  "wss://sora.uclab.jp/signaling",
+  "wss://sora2.uclab.jp/signaling",
   "sora",
   "",
   "token"

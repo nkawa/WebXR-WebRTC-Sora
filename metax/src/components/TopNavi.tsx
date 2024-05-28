@@ -18,12 +18,12 @@ export default (props) => {
                     <Nav.Link href="/#/admin"> Admin </Nav.Link>
                     <Nav.Link href="/#/swrecv"> Recv </Nav.Link>
                     <Nav.Link href="/#/autosend"> AutoSend </Nav.Link>
+            <Nav.Link href="/sendrecv"> Send/Recv </Nav.Link>
     */}
             <Nav.Link href="/sora"> Home </Nav.Link>
             <Nav.Link href="/vr"> WithVR </Nav.Link>
             <Nav.Link href="/recvonly"> Video </Nav.Link>
-            <Nav.Link href="/autosend"> Send </Nav.Link>
-            <Nav.Link href="/sendrecv"> Send/Recv </Nav.Link>
+            <Nav.Link href="/sendonly"> Send </Nav.Link>
           </Nav>
           <Nav>
             <Nav.Link href="https://ucl.nuee.nagoya-u.ac.jp">

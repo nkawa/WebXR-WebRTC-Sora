@@ -11,12 +11,14 @@
   "dependencies": {
     "@types/webxr": "^0.5.15",
     "@webxr-input-profiles/motion-controllers": "^1.0.0",
+    "aframe": "^1.5.0",
     "bootstrap": "^5.3.3",
     "gl-matrix": "^3.4.3",
     "next": "14.2.2",
     "react": "^18",
     "react-bootstrap": "^2.10.2",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "webgl-context": "^2.2.0"
   },
   "devDependencies": {
     "@types/node": "^20",

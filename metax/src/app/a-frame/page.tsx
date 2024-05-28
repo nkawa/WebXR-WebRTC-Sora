@@ -1,11 +1,28 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
+import "aframe";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
   ConnectionSubscriber,
 } from "sora-js-sdk";
+
+import type { Navigator } from "webxr";
+
+import { WebXRButton } from "../../vendor/util/webxr-button";
+
+import { Scene, WebXRView } from "../../vendor/render/scenes/scene";
+import {
+  Renderer,
+  createWebGLContext,
+} from "../../vendor/render/core/renderer";
+//import {Gltf2Node} from '../vendor/render/nodes/gltf2.js';
+import { VideoboxNode } from "../../vendor/render/nodes/videobox";
+import { InlineViewerHelper } from "../../vendor/util/inline-viewer-helper";
+
+import { VideoNode } from "../../vendor/render/nodes/video";
 
 import TopNavi from "../../components/TopNavi";
 
@@ -93,11 +110,6 @@ class SoraClient {
       remoteVideo.controls = true;
       remoteVideo.width = 320;
       remoteVideo.height = 240;
-
-      remoteVideo.setAttribute("width", "" + window.innerWidth);
-      remoteVideo.setAttribute("height", "" + window.innerHeight);
-      console.log("video:",remoteVideo)
-
       const tracks = stream.getTracks();
       console.log("Tracks", tracks);
       try {
@@ -120,17 +132,26 @@ class SoraClient {
   }
 }
 
-
 const soraClient = new SoraClient(
   "sc01",
-  "wss://sora2.uclab.jp/signaling",
+  "wss://sora.uclab.jp/signaling",
   "sora",
   "",
   "token"
 );
 
-
 var hasRun: boolean = false;
+const scene = new Scene();
+let renderer = null;
+let gl: any = null;
+let xrImmersiveRefSpace: any = null;
+let inlineViewerHelper: any = null;
+let newVideo: any = null;
+
+let context = null;
+let channel = null;
+let person = null;
+let xrButton: any = null;
 
 const Page = () => {
   const connectSora = async () => {
@@ -142,9 +163,137 @@ const Page = () => {
     await soraClient.disconnect();
   };
 
+  const onRequestSession = () => {
+    if (navigator.xr) {
+      return navigator.xr.requestSession("immersive-vr").then((session) => {
+        xrButton.setSession(session);
+        session.isImmersive = true;
+        onSessionStarted(session);
+      });
+    }
+  };
+
+  const initXR = () => {
+    console.log("Start InitXR");
+    xrButton = new WebXRButton({
+      onRequestSession: onRequestSession,
+      onEndSession: onEndSession,
+    });
+    document.querySelector("header").appendChild(xrButton.domElement);
+    if ("xr" in navigator) {
+      console.log("XR is supported");
+    } else {
+      console.log(navigator);
+    }
+
+    if (navigator.xr) {
+      console.log("With XR");
+      // How about WebXR
+      navigator.xr.isSessionSupported("immersive-vr").then((supported) => {
+        xrButton.enabled = supported;
+      });
+
+      navigator.xr.requestSession("inline").then(onSessionStarted);
+    } else {
+      console.log("No XR");
+    }
+  };
+
+  function initGL() {
+    if (gl) return;
+    console.log("Start InitGL");
+
+    gl = createWebGLContext({
+      xrCompatible: true,
+    });
+
+    document.body.appendChild(gl.canvas);
+
+    function onResize() {
+      gl.canvas.width = gl.canvas.clientWidth * window.devicePixelRatio;
+      gl.canvas.height = gl.canvas.clientHeight * window.devicePixelRatio;
+      // for video
+      if (newVideo) {
+        newVideo.setAttribute("width", "" + window.innerWidth);
+        newVideo.setAttribute("height", "" + window.innerHeight);
+      }
+    }
+    window.addEventListener("resize", onResize);
+    onResize();
+
+    renderer = new Renderer(gl);
+    scene.setRenderer(renderer);
+  }
+
+  function onSessionStarted(session: any) {
+    session.addEventListener("end", onSessionEnded);
+
+    initGL();
+    scene.inputRenderer.useProfileControllerMeshes(session);
+    let glLayer = new XRWebGLLayer(session, gl);
+    session.updateRenderState({ baseLayer: glLayer });
+
+    let refSpaceType = session.isImmersive ? "local" : "viewer";
+    session.requestReferenceSpace(refSpaceType).then((refSpace: any) => {
+      if (session.isImmersive) {
+        xrImmersiveRefSpace = refSpace;
+      } else {
+        inlineViewerHelper = new InlineViewerHelper(gl.canvas, refSpace);
+      }
+      session.requestAnimationFrame(onXRFrame);
+    });
+  }
+
+  function onEndSession(session) {
+    session.end();
+  }
+
+  function onSessionEnded(event) {
+    if (event.session.isImmersive) {
+      xrButton.setSession(null);
+    }
+  }
+
+  //ここでポーズ更新
+  function onXRFrame(t, frame) {
+    let session = frame.session;
+    let refSpace = session.isImmersive
+      ? xrImmersiveRefSpace
+      : inlineViewerHelper.referenceSpace;
+    let pose = frame.getViewerPose(refSpace);
+
+    scene.startFrame();
+
+    session.requestAnimationFrame(onXRFrame);
+
+    let glLayer = session.renderState.baseLayer;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    if (pose) {
+      let views = [];
+      for (let view of pose.views) {
+        let renderView = new WebXRView(view, glLayer);
+
+        // It's important to take into account which eye the view is
+        // associated with in cases like this, since it informs which half
+        // of the stereo image should be used when rendering the view.
+        renderView.eye = view.eye;
+        views.push(renderView);
+      }
+
+      scene.updateInputSources(frame, refSpace);
+
+      scene.drawViewArray(views);
+    }
+
+    scene.endFrame();
+  }
+
   // ページが開いたら１回だけ実行される処理
   const doit = () => {
-    //    connectSora();
+    console.log("Initialize XR");
+    initXR();
   };
 
   useEffect(() => {
@@ -157,11 +306,9 @@ const Page = () => {
   }, []); // 空の配列を渡すことで、初回レンダリング時のみ実行されます
 
   return (
-    <div>
-      <TopNavi />
-
+    <header>
       <div>
-        <h1>auto receive test</h1>
+        <h1>VR test</h1>
         <div>
           <button onClick={connectSora}>connect</button>
           <button onClick={disconnectSora}>stop</button>
@@ -169,7 +316,7 @@ const Page = () => {
           <div id="remote-videos"></div>
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

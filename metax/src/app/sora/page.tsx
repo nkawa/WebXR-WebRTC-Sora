@@ -57,6 +57,9 @@ class SoraClient {
     if (localVideo) {
       // 自分のビデオを設定する
       localVideo.srcObject = stream;
+      localVideo.setAttribute("width", "" + window.innerWidth);
+      localVideo.setAttribute("height", "" + window.innerHeight);
+      console.log("video:",localVideo)
     }
   }
 
@@ -95,10 +98,14 @@ class SoraClient {
       remoteVideo.autoplay = true;
       remoteVideo.playsInline = true;
       remoteVideo.controls = true;
-      remoteVideo.width = 160;
-      remoteVideo.height = 120;
+ //     remoteVideo.width = 160;
+ //     remoteVideo.height = 120;
+      remoteVideo.setAttribute("width", "" + window.innerWidth);
+      remoteVideo.setAttribute("height", "" + window.innerHeight);
       remoteVideo.srcObject = stream;
       remoteVideos.appendChild(remoteVideo);
+      console.log("video:",remoteVideo)
+
     }
   }
 

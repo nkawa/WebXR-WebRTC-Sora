@@ -17,8 +17,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
+console.log("material.js loaded")
 const GL = WebGLRenderingContext; // For enums
+console.log("material.js Context work?")
 
 export const CAP = {
   // Enable caps
@@ -74,9 +75,9 @@ export function stateToBlendFunc(state, mask, shift) {
 export class MaterialState {
   constructor() {
     this._state = CAP.CULL_FACE |
-                  CAP.DEPTH_TEST |
-                  CAP.COLOR_MASK |
-                  CAP.DEPTH_MASK;
+      CAP.DEPTH_TEST |
+      CAP.COLOR_MASK |
+      CAP.DEPTH_MASK;
 
     // Use a fairly commonly desired blend func as the default.
     this.blendFuncSrc = GL.SRC_ALPHA;
@@ -254,7 +255,7 @@ export class Material {
     return sampler;
   }
 
-  defineUniform(uniformName, defaultValue=null, length=0) {
+  defineUniform(uniformName, defaultValue = null, length = 0) {
     let uniform = new MaterialUniform(uniformName, defaultValue, length);
     this._uniforms.push(uniform);
     return uniform;
