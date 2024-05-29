@@ -19,7 +19,7 @@ Virtual Communication using WebRTC-SORA
 pnpm create next-app
 で metax を作成
 
-cd metax
-pnpm dev
+ cd metax
+ pnpm dev
 
 で開発用サーバが起動する
