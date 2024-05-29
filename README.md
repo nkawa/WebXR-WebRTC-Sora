@@ -7,7 +7,6 @@ Virtual Communication using WebRTC-SORA
 　・Meta Quest 等では、 Hand Tracking/Controller Tracking もしたい
 　・Tracking の結果を Data Channel 　で伝送したい
 
--
 - node js: 20.12.2 (LTS)
 - React を使う　 (React : )
 - Create React App は、そろそろ古い？みたいなので、Vite を使ってみる？
@@ -15,7 +14,13 @@ Virtual Communication using WebRTC-SORA
 - まずは Web で普通に WebRTC を使えるようにする
   　　　 SORA Javascript SDK 　をちゃんと使う
 
-ーーー
+- WebXR との連携も実施
+  - WebSocket 経由で、右手コントローラの位置、角度、ボタン情報などを送信
+  - クラウド上の WebSocket 変換サーバが、WebSocket -> MQTT に変換（これ直したいけど）
+  - MQTT -> ロボットアームで遠隔操作
+    
+
+--
 pnpm create next-app
 で metax を作成
 
