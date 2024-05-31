@@ -79,6 +79,8 @@ export class VideoNode extends Node {
     this._displayMode = options.displayMode || 'mono';
 
     this._video_texture = new VideoTexture(this._video);
+//    this._video_texture.textureKey="webrtc-vr";//
+
   }
 
   get aspectRatio() {
@@ -122,6 +124,7 @@ export class VideoNode extends Node {
     primitive.setBounds([-1.0, -1.0, 0.0], [1.0, 1.0, 0.015]);
 
     let material = new VideoMaterial();
+    console.log("Material",material)
     material.image.texture = this._video_texture;
 
     switch (this._displayMode) {

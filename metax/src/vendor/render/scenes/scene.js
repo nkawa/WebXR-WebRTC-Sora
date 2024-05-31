@@ -18,14 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {RenderView} from '../core/renderer';
-import {InputRenderer} from '../nodes/input-renderer';
-
-import {StatsViewer} from '../nodes/stats-viewer';
-
-import {Node} from '../core/node';
-import {vec3, quat} from 'gl-matrix';
-import {Ray} from '../math/ray';
+import {RenderView} from '../core/renderer.js';
+import {InputRenderer} from '../nodes/input-renderer.js';
+import {StatsViewer} from '../nodes/stats-viewer.js';
+import {Node} from '../core/node.js';
+import {vec3, quat} from '../math/gl-matrix.js';
+import {Ray} from '../math/ray.js';
 
 export class WebXRView extends RenderView {
   constructor(view, layer, viewport) {
@@ -74,8 +72,8 @@ export class Scene extends Node {
 
   get inputRenderer() {
     if (!this._inputRenderer) {
-       this._inputRenderer = new InputRenderer();
-       this.addNode(this._inputRenderer);
+      this._inputRenderer = new InputRenderer();
+      this.addNode(this._inputRenderer);
     }
     return this._inputRenderer;
   }
@@ -142,7 +140,7 @@ export class Scene extends Node {
 
         // Any time that we have a grip matrix, we'll render a controller.
         if (gripPose) {
-          this.inputRenderer.addController(gripPose.transform.matrix, inputSource.handedness);
+          this.inputRenderer.addController(gripPose.transform.matrix, inputSource.handedness, inputSource.profiles[0]);
         }
       }
 
@@ -188,17 +186,17 @@ export class Scene extends Node {
     this._statsEnabled = enable;
 
     if (enable) {
-//      this._stats = new StatsViewer();
-//      this._stats.selectable = true;
-//      this.addNode(this._stats);
+      this._stats = new StatsViewer();
+      this._stats.selectable = true;
+      this.addNode(this._stats);
 
       if (this._statsStanding) {
-//        this._stats.translation = [0, 1.4, -0.75];
+        this._stats.translation = [0, 1.4, -0.75];
       } else {
-//        this._stats.translation = [0, -0.3, -0.5];
+        this._stats.translation = [0, -0.3, -0.5];
       }
-//      this._stats.scale = [0.3, 0.3, 0.3];
-//      quat.fromEuler(this._stats.rotation, -45.0, 0.0, 0.0);
+      this._stats.scale = [0.3, 0.3, 0.3];
+      quat.fromEuler(this._stats.rotation, -45.0, 0.0, 0.0);
     } else if (!enable) {
       if (this._stats) {
         this.removeNode(this._stats);

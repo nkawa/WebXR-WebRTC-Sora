@@ -51,7 +51,8 @@ export class Texture {
   }
 
   get textureKey() {
-    return null;
+    return "webxr-rtc";
+//    return null;
   }
 }
 
@@ -170,7 +171,8 @@ export class VideoTexture extends Texture {
   }
 
   get textureKey() {
-    return this._video.src;
+    return "webrtc_key"
+//S    return this._video.src;
   }
 
   get source() {

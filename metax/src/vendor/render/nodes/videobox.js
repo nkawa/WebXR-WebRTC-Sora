@@ -37,12 +37,15 @@ class VideoBoxTexture extends Texture {
     this._video = video;
     console.log("video state", video.readyState);
 
-    if (video.readyState >= 2) {
+    if (video.readyState >= 2 ) {
+      console.log("Video Starting!")
       this._promise = Promise.resolve(this);
     } else if (video.error) {
+      console.log("Video err")
       this._promise = Promise.reject(video.error);
     } else {
       this._promise = new Promise((resolve, reject) => {
+        console.log("Video loaded?",this._video.readyState)
         video.addEventListener('loadeddata', () => resolve(this));
         video.addEventListener('error', reject);
       });
@@ -55,10 +58,13 @@ class VideoBoxTexture extends Texture {
   }
 
   get width() {
+    return 1980;
     return this._video.videoWidth;
   }
 
   get height() {
+    return 2000;
+
     return this._video.videoHeight;
   }
 
@@ -140,6 +146,7 @@ export class VideoboxNode extends Node {
   }
 
   onRendererChanged(renderer) {
+    console.log("VideoBox:Renderer.changed",renderer)
     let vertices = [];
     let indices = [];
 
@@ -190,7 +197,7 @@ export class VideoboxNode extends Node {
 
     let material = new VideoboxMaterial();
     material.image.texture = this._video_texture;
-//    console.log("Material",material);
+    console.log("Material",material);
 
     switch (this._displayMode) {
       case 'mono':
