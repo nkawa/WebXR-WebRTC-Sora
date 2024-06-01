@@ -563,7 +563,7 @@ function updateSources(session, frame, refSpace, sources, type) {
       eqrtLayer.centralHorizontalAngle = Math.PI ;//* 180 /*eqrtVideoAngle*/ // 180;
       eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.2;
       eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.2;
-      eqrtLayer.radius = 20; // eqrtRadius;
+      eqrtLayer.radius = 30; // eqrtRadius;
 
       console.log("Request Update State");
       session.updateRenderState({ layers: [eqrtLayer, projLayer] });
@@ -615,12 +615,12 @@ function updateSources(session, frame, refSpace, sources, type) {
       let views = [];
       menuSystem.processInput(frame, scene, xrRefSpace);
 //      console.log("View.len", pose.views.length)
-      let viewCount = 0;
+//      let viewCount = 0;
       for (let view of pose.views) {
 
         let viewport = null;
         let glLayer = xrGLFactory.getViewSubImage(projLayer, view);
-        console.log(viewCount, glLayer)
+//        console.log(viewCount, glLayer)
         glLayer.framebuffer = xrFramebuffer;
         viewport = glLayer.viewport;
         gl.bindFramebuffer(gl.FRAMEBUFFER, xrFramebuffer);
@@ -628,7 +628,7 @@ function updateSources(session, frame, refSpace, sources, type) {
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, glLayer.colorTexture, 0);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, glLayer.depthStencilTexture, 0);
         views.push(new WebXRView(view, glLayer, viewport));
-        viewCount += 1
+//        viewCount += 1
       }
       scene.drawViewArray(views);
     }

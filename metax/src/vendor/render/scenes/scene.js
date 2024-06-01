@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {RenderView} from '../core/renderer.js';
-import {InputRenderer} from '../nodes/input-renderer.js';
-import {StatsViewer} from '../nodes/stats-viewer.js';
-import {Node} from '../core/node.js';
-import {vec3, quat} from '../math/gl-matrix.js';
-import {Ray} from '../math/ray.js';
+import {RenderView} from '../core/renderer';
+import {InputRenderer} from '../nodes/input-renderer';
+import {StatsViewer} from '../nodes/stats-viewer';
+import {Node} from '../core/node';
+import {vec3, quat} from 'gl-matrix';
+import {Ray} from '../math/ray';
 
 export class WebXRView extends RenderView {
   constructor(view, layer, viewport) {
@@ -45,7 +45,7 @@ export class Scene extends Node {
     this._statsStanding = false;
     this._stats = null;
     this._statsEnabled = false;
-    this.enableStats(true); // Ensure the stats are added correctly by default.
+//    this.enableStats(true); // Ensure the stats are added correctly by default.
 
     this._inputRenderer = null;
     this._resetInputEndFrame = true;
@@ -72,8 +72,8 @@ export class Scene extends Node {
 
   get inputRenderer() {
     if (!this._inputRenderer) {
-      this._inputRenderer = new InputRenderer();
-      this.addNode(this._inputRenderer);
+       this._inputRenderer = new InputRenderer();
+       this.addNode(this._inputRenderer);
     }
     return this._inputRenderer;
   }
@@ -140,7 +140,7 @@ export class Scene extends Node {
 
         // Any time that we have a grip matrix, we'll render a controller.
         if (gripPose) {
-          this.inputRenderer.addController(gripPose.transform.matrix, inputSource.handedness, inputSource.profiles[0]);
+          this.inputRenderer.addController(gripPose.transform.matrix, inputSource.handedness);
         }
       }
 
