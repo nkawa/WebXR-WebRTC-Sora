@@ -40,16 +40,11 @@ import { VideoNode } from "../../vendor/render/nodes/video";
 import TopNavi from "../../components/TopNavi";
 import { sourceMapsEnabled } from "process";
 
-var WGLUUrl = require('../../vendor/wglu/wglu-url.js')
-const wglup = require('../../vendor/wglu/wglu-program.js')
-var vrsup = require('../../vendor/stereo-util.js');
+const  WGLUUrl  = require('../../vendor/wglu/wglu-url.js')
+//const wglup = require('../../vendor/wglu/wglu-program.js')
+//var vrsup = require('../../vendor/stereo-util.js');
+const {VRStereoUtil } = require('../../vendor/stereo-util.js');
 
-console.log(WGLUUrl)
-
-console.log(wglup.WGLUProgram)
-let WGLUProgram = wglup.WGLUProgram
-let VRStereoUtil = vrsup.VRStereoUtil
-console.log(VRStereoUtil)
 
 class SoraClient {
   private label: string;
@@ -136,8 +131,8 @@ class SoraClient {
       console.log("RemoteVideo",remoteVideo.width, remoteVideo.height)
       remoteVideo.width = window.innerWidth;
       remoteVideo.height = window.innerHeight;
-      eqrtVideoWidth = remoteVideo.width ;// 1920;
-      eqrtVideoHeight = remoteVideo.height;//1080; 
+      eqrtVideoWidth = 1920; // remoteVideo.width ;// 1920;
+      eqrtVideoHeight = 540; //remoteVideo.height;//1080; 
       console.log("RemoteVideoAfter",remoteVideo.width, remoteVideo.height)
       const tracks = stream.getTracks();
       console.log("Tracks", tracks);
@@ -289,7 +284,7 @@ let eqrtVideoElement = null;
 let eqrtVideoWidth = 0;
 let eqrtVideoHeight = 0;
 let eqrtVideoNeedsUpdate = false;
-let eqrtVideoLayout = 'stereo-top-bottom';
+let eqrtVideoLayout = 'stereo-left-right';
 let menuSystem = null;
 
 const Page = () => {
@@ -303,6 +298,7 @@ const Page = () => {
   };
   const checkVideo = ()=>{
     console.log("Check Video", newVideo.readyState, newVideo.error)
+    console.log("Video Size", newVideo.width, newVideo.height)
   }
 
   const onRequestSession = () => {
@@ -409,7 +405,7 @@ function updateSources(session, frame, refSpace, sources, type) {
                       let gamepad = inputSource.gamepad
                       let pad = null
                       if (gamepad) {
-                          //console.log("GamePad!:", gamepad.buttons.length, gamepad.buttons[0])
+                       //   console.log("GamePad!:", gamepad.buttons.length, gamepad.buttons[0])
                           pad = {
                               len: gamepad.buttons.length,
                               b0: gamepad.buttons[0].value,
@@ -481,6 +477,7 @@ function updateSources(session, frame, refSpace, sources, type) {
     scene.setRenderer(renderer);
 
     stereoUtil = new VRStereoUtil(gl);
+    console.log("StereoUtil",stereoUtil)
 
   }
 
@@ -564,8 +561,8 @@ function updateSources(session, frame, refSpace, sources, type) {
       eqrtLayer = xrGLFactory.createEquirectLayer(spc);
 
       eqrtLayer.centralHorizontalAngle = Math.PI ;//* 180 /*eqrtVideoAngle*/ // 180;
-      eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.5;
-      eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.5;
+      eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.2;
+      eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.2;
       eqrtLayer.radius = 20; // eqrtRadius;
 
       console.log("Request Update State");
@@ -603,7 +600,7 @@ function updateSources(session, frame, refSpace, sources, type) {
       gl.bindTexture(gl.TEXTURE_2D, glayer.colorTexture);
 //      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, eqrtVideoWidth, eqrtVideoHeight, gl.RGBA, gl.UNSIGNED_BYTE, newVideo);
 //console.log(newVideo.width,newVideo.height)
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 960, 640, gl.RGBA, gl.UNSIGNED_BYTE, newVideo);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1920, 520, gl.RGBA, gl.UNSIGNED_BYTE, newVideo);
       gl.bindTexture(gl.TEXTURE_2D, null);
     }
     updateInputSources(session,frame, xrRefSpace)
@@ -617,16 +614,21 @@ function updateSources(session, frame, refSpace, sources, type) {
    //   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       let views = [];
       menuSystem.processInput(frame, scene, xrRefSpace);
-
+//      console.log("View.len", pose.views.length)
+      let viewCount = 0;
       for (let view of pose.views) {
+
         let viewport = null;
         let glLayer = xrGLFactory.getViewSubImage(projLayer, view);
+        console.log(viewCount, glLayer)
         glLayer.framebuffer = xrFramebuffer;
         viewport = glLayer.viewport;
         gl.bindFramebuffer(gl.FRAMEBUFFER, xrFramebuffer);
+//        console.log("colorText:",glLayer.colorTexture)
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, glLayer.colorTexture, 0);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, glLayer.depthStencilTexture, 0);
         views.push(new WebXRView(view, glLayer, viewport));
+        viewCount += 1
       }
       scene.drawViewArray(views);
     }

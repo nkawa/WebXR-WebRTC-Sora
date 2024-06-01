@@ -179,4 +179,5 @@ var WGLUProgram = (function() {
   return Program;
 })();
 
-exports.WGLUProgram = WGLUProgram;
+
+exports.WGLUProgram = WGLUProgram

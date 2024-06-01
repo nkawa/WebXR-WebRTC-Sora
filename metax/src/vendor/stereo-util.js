@@ -2,7 +2,7 @@ const { WGLUProgram } = require('./wglu/wglu-program.js');
 
 const VRStereoUtil = (function () {
   "use strict";
-  console.log("stereo-util Working!?")
+  console.log("stereo-util Working!?",  WGLUProgram)
 
   var VS = [
       "#version 300 es",
@@ -101,7 +101,7 @@ const VRStereoUtil = (function () {
 
     //this.vaoext = gl.getExtension("OES_vertex_array_object"); // Vendor prefixes may apply!  
     this.vao = gl.createVertexArray();
-
+    console.log("Doit WGLU", WGLUProgram)
     this.program = new WGLUProgram(gl);
     this.program.attachShaderSource(VS, gl.VERTEX_SHADER);
     this.program.attachShaderSource(FS, gl.FRAGMENT_SHADER);
