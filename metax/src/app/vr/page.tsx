@@ -408,10 +408,10 @@ function updateSources(session, frame, refSpace, sources, type) {
                        //   console.log("GamePad!:", gamepad.buttons.length, gamepad.buttons[0])
                           pad = {
                               len: gamepad.buttons.length,
-                              b0: gamepad.buttons[0].value,
+                              b0: gamepad.buttons[0].value || 0,
                              bm: gamepad.buttons[1].value || 0,
- //                             bA: gamepad.buttons[4].pressed,
- //                             bB: gamepad.buttons[5].pressed
+                              bA: gamepad.buttons[4].pressed || false,
+                              bB: gamepad.buttons[5].pressed || false
                           }
                       }
                       var sobj = {
@@ -560,9 +560,9 @@ function updateSources(session, frame, refSpace, sources, type) {
       console.log("Space",spc)
       eqrtLayer = xrGLFactory.createEquirectLayer(spc);
 
-      eqrtLayer.centralHorizontalAngle = Math.PI ;//* 180 /*eqrtVideoAngle*/ // 180;
-      eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.2;
-      eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.2;
+      eqrtLayer.centralHorizontalAngle = Math.PI*150/180 ;//* 180 /*eqrtVideoAngle*/ // 180;
+      eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.8;
+      eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.8;
       eqrtLayer.radius = 30; // eqrtRadius;
 
       console.log("Request Update State");
