@@ -1,11 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
-import Sora, {
-  type SoraConnection,
-  type SignalingNotifyMessage,
-  ConnectionSubscriber,
-} from "sora-js-sdk";
 
 import type { Navigator } from "webxr";
 
@@ -43,123 +38,7 @@ import { sourceMapsEnabled } from "process";
 const  WGLUUrl  = require('../../vendor/wglu/wglu-url.js')
 //const wglup = require('../../vendor/wglu/wglu-program.js')
 //var vrsup = require('../../vendor/stereo-util.js');
-const {VRStereoUtil } = require('../../vendor/stereo-util.js');
-
-
-class SoraClient {
-  private label: string;
-
-  private debug = false;
-
-  private channelId: string;
-  private metadata: { access_token: string };
-  private options: object;
-
-  private sora: SoraConnection;
-  private connection: ConnectionSubscriber;
-
-  constructor(
-    label: string,
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    accessToken: string
-  ) {
-    this.label = label;
-
-    this.sora = Sora.connection(signalingUrl, this.debug);
-    this.channelId = `${channelIdPrefix}${channelIdSuffix}`;
-    this.metadata = { access_token: accessToken };
-    this.options = {};
-
-    //    this.connection = this.sora.sendrecv(
-    this.connection = this.sora.recvonly(
-      this.channelId,
-      this.metadata,
-      this.options
-    );
-
-    this.connection.on("notify", this.onnotify.bind(this));
-    this.connection.on("track", this.ontrack.bind(this));
-    this.connection.on("removetrack", this.onremovetrack.bind(this));
-
-    console.log("SoraClient init;" + label);
-    console.log(this.sora);
-  }
-
-  async connect(): Promise<void> {
-    await this.connection.connect();
-  }
-
-  async disconnect(): Promise<void> {
-    await this.connection.disconnect();
-    const localVideo = document.querySelector<HTMLVideoElement>(`#local-video`);
-    if (localVideo !== null) {
-      localVideo.srcObject = null;
-    } else {
-    }
-    // お掃除
-    const remoteVideos = document.querySelector(`#remote-videos`);
-    if (remoteVideos) {
-      remoteVideos.innerHTML = "";
-    }
-  }
-
-  private onnotify(event: SignalingNotifyMessage): void {
-    if (
-      event.event_type === "connection.created" &&
-      this.connection.connectionId === event.connection_id
-    ) {
-      console.log("Notify:" + event.connection_id);
-      console.log(event);
-    }
-  }
-
-  private ontrack(event: RTCTrackEvent): void {
-    console.log("OnTrack!", event);
-    const stream = event.streams[0];
-    const remoteVideoId = `remote-video-${stream.id}`;
-    const remoteVideos = document.querySelector(`#remote-videos`);
-    if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
-//      console.log("Set Media Stream", typeof stream, "::", stream);
-      const remoteVideo = document.createElement("video");
-      remoteVideo.id = remoteVideoId;
-      remoteVideo.style.border = "1px solid";
-      remoteVideo.autoplay = true;
-      remoteVideo.playsInline = true;
-      remoteVideo.controls = true;
-//      console.log("RemoteVideo",remoteVideo.width, remoteVideo.height)
-      remoteVideo.width = window.innerWidth;
-      remoteVideo.height = window.innerHeight;
-      eqrtVideoWidth = 1920; // remoteVideo.width ;// 1920;
-      eqrtVideoHeight = 540; //remoteVideo.height;//1080; 
-//      console.log("RemoteVideoAfter",remoteVideo.width, remoteVideo.height)
-      const tracks = stream.getTracks();
-//      console.log("Tracks", tracks);
-      try {
-        remoteVideo.srcObject = stream;
-      } catch (err) {
-        console.log("SetMedia Error", err);
-      }
-//      console.log("MeidaSrc:=", remoteVideo.src);
-//      console.log("MeidaSrcObject:=", remoteVideo.srcObject);
-      remoteVideos.appendChild(remoteVideo);
-      newVideo = remoteVideo;
-
-      
-    }
-  }
-
-  private onremovetrack(event: MediaStreamTrackEvent): void {
-    const target = event.target as MediaStream;
-    const remoteVideo = document.querySelector(`#remote-video-${target.id}`);
-    if (remoteVideo) {
-      document.querySelector(`#remote-videos`)?.removeChild(remoteVideo);
-    }
-    newVideo = null;
-  }
-}
-
+//const {VRStereoUtil } = require('../../vendor/stereo-util.js');
 
 let ws = null; // websocket 
 
@@ -227,13 +106,14 @@ function initWebSocket() {
           }
       }
       ws.send(JSON.stringify(info))
+      console.log("WebSocket 送信OK");
   })
   cws.addEventListener("close", (ev) => {
       console.log("WebSocket cloed", ev);
       ws = null;
 
       // ちょっと待ってから再接続
-      setTimeout(initWebSocket, 1000)
+//      setTimeout(initWebSocket, 1000)
       // try to reconnect?
   })
   cws.onmessage = function (message) {
@@ -246,13 +126,6 @@ function initWebSocket() {
 }
 
 
-const soraClient = new SoraClient(
-  "sc01",
-  "wss://sora2.uclab.jp/signaling",
-  "sora",
-  "",
-  "token"
-);
 
 var hasRun: boolean = false;
 const scene = new Scene();
@@ -290,12 +163,8 @@ let withLayer = false;
 
 const Page = () => {
   const connectSora = async () => {
-    console.log("Connect!");
-    await soraClient.connect();
   };
   const disconnectSora = async () => {
-    console.log("Discon!");
-    await soraClient.disconnect();
   };
   const checkVideo = ()=>{
     console.log("Check Video", newVideo.readyState, newVideo.error)
@@ -315,10 +184,11 @@ const Page = () => {
 
     if (navigator.xr) {
 
-      return navigator.xr.requestSession(isAR ? 'immersive-ar' : 'immersive-vr', { requiredFeatures:['layers'], optionalFeatures: ['local-floor', 'bounded-floor'] }).then((session)=>{
-        withLayer = true;
+      return navigator.xr.requestSession(isAR ? 'immersive-ar' : 'immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor'] }).then((session)=>{
+//        withLayer = true;
         xrButton.setSession(session);
         onSessionStarted(session);
+        console.log("WithLayerOK but no layer")
       })
       .catch((error) =>{
         console.log("Error on setSession", error);
@@ -388,7 +258,7 @@ function updateSources(session, frame, refSpace, sources, type) {
   for (let inputSource of sources) {
       let hand_type = type + inputSource.handedness;
       if (type == "input_") {
-//        console.log("updateSources:",inputSource, refSpace)
+//          console.log("updateSources:",inputSource, refSpace)
           let targetRayPose = frame.getPose(inputSource.targetRaySpace, refSpace);
 
           if (targetRayPose) {
@@ -408,14 +278,14 @@ function updateSources(session, frame, refSpace, sources, type) {
                   targetRay.direction.y * cursorDistance,
                   targetRay.direction.z * cursorDistance,
               ]);
-              //                        console.log("hand_type", hand_type)
+//              console.log("hand_type", hand_type)
               if (hand_type == "input_right") {
                   const now = Date.now()
                   if (now - lastSent > 40) {
                       let gamepad = inputSource.gamepad
                       let pad = null
                       if (gamepad) {
-                       //   console.log("GamePad!:", gamepad.buttons.length, gamepad.buttons[0])
+ //                         console.log("GamePad!:", gamepad.buttons.length, gamepad.buttons[0])
                           pad = {
                               len: gamepad.buttons.length,
                               b0: gamepad.buttons[0].value || 0,
@@ -486,8 +356,8 @@ function updateSources(session, frame, refSpace, sources, type) {
     renderer = new Renderer(gl);
     scene.setRenderer(renderer);
 
-    stereoUtil = new VRStereoUtil(gl);
-    console.log("StereoUtil",stereoUtil)
+//    stereoUtil = new VRStereoUtil(gl);
+//    console.log("StereoUtil",stereoUtil)
 
   }
 
@@ -526,66 +396,26 @@ function updateSources(session, frame, refSpace, sources, type) {
     initButtons()
 
     xrFramebuffer = gl.createFramebuffer();
+    // NoVideo do not require WebGLLayer
     let glLayer = new XRWebGLLayer(session, gl);
-    if (withLayer){
-      xrGLFactory = new XRWebGLBinding(session, gl);
-      console.log("XR WebGLWork!",xrGLFactory)
-    }else{
-      session.updateRenderState({baseLayer:glLayer});
-    }
+    console.log("Update renderState",glLayer)
+    session.updateRenderState({baseLayer:glLayer});
+    console.log("Update renderState Done")
 
     session.addEventListener("end", onSessionEnded);
 
     session.addEventListener('inputsourceschange', onInputSourcesChange);
     initWebSocket()
-/*
-    if (newVideo) {
-      console.log("NewVideo! for Add in Scene",newVideo)
-      videoNode = new VideoboxNode({
-                displayMode: 'stereoTopBottom',
-                rotationY: Math.PI*0.5,
-                video:newVideo
-              })
-      scene.addNode(videoNode)
-//      newVideo = null // 
-    }else{
-      console.log("No video")
-    }
-*/
  
     scene.inputRenderer.useProfileControllerMeshes(session);
-//    session.updateRenderState({ baseLayer: glLayer });
 
-//    let refSpaceType = session.isImmersive ? "local" : "viewer";
     let refSpaceType = "local";
+    // novideo 
     session.requestReferenceSpace(refSpaceType).then((refSpace: any) => {
       xrRefSpace = refSpace.getOffsetReferenceSpace(new XRRigidTransform({x:0,y:0,z:0}));
-      if(xrGLFactory && newVideo){
-
-        projLayer = xrGLFactory.createProjectionLayer({ space: refSpace, stencil: false });
-       var spc = {
-          space: refSpace,
-          viewPixelWidth: eqrtVideoWidth / (eqrtVideoLayout === "stereo-left-right" ? 2 : 1),
-          viewPixelHeight: eqrtVideoHeight / (eqrtVideoLayout === "stereo-top-bottom" ? 2 : 1),
-          layout: eqrtVideoLayout,
-        }
-        console.log("Space",spc)
-        eqrtLayer = xrGLFactory.createEquirectLayer(spc);
-
-        eqrtLayer.centralHorizontalAngle = Math.PI*150/180 ;//* 180 /*eqrtVideoAngle*/ // 180;
-        eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.8;
-        eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.8;
-        eqrtLayer.radius = 30; // eqrtRadius;
-
-  //      console.log("Request Update State");
-        session.updateRenderState({ layers: [eqrtLayer, projLayer] });
-      }else{ // no layer.. no update?
-
-      }
       session.requestAnimationFrame(onXRFrame);
 
     })
-//    scene.addNode(new Gltf2Node({ url: '../space/space.gltf' }));
 
   }
 
@@ -605,19 +435,7 @@ function updateSources(session, frame, refSpace, sources, type) {
 
     scene.startFrame();
     session.requestAnimationFrame(onXRFrame);
-    if (eqrtLayer && (eqrtVideoNeedsUpdate || eqrtLayer.needsRedraw)) {
-      eqrtVideoNeedsUpdate = false;
-      let glayer = xrGLFactory.getSubImage(eqrtLayer, frame);
 
-      // TEXTURE_CUBE_MAP expects the Y to be flipped for the faces and it already
-      // is flipped in our texture image.
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-      gl.bindTexture(gl.TEXTURE_2D, glayer.colorTexture);
-//      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, eqrtVideoWidth, eqrtVideoHeight, gl.RGBA, gl.UNSIGNED_BYTE, newVideo);
-//console.log(newVideo.width,newVideo.height)
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1920, 520, gl.RGBA, gl.UNSIGNED_BYTE, newVideo);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-    }
     updateInputSources(session,frame, xrRefSpace)
 
     //    console.log(frame, session, xrRefSpace)
@@ -633,6 +451,7 @@ function updateSources(session, frame, refSpace, sources, type) {
 //      let viewCount = 0;
 
       if (withLayer){
+        console.log("WithLayer device")
         for (let view of pose.views) {
 
           let viewport = null;
@@ -657,6 +476,7 @@ function updateSources(session, frame, refSpace, sources, type) {
         }
 
       }else{
+//        console.log("no layer")
         scene.drawXRFrame(frame, pose);
 
       }
@@ -676,7 +496,7 @@ function updateSources(session, frame, refSpace, sources, type) {
     // ページが開かれた時に実行される関数
     if (!hasRun) {
       hasRun = true;
-      console.log("doit!");
+//      console.log("doit!");
       doit();
     }
   }, []); // 空の配列を渡すことで、初回レンダリング時のみ実行されます
