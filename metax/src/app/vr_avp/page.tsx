@@ -19,7 +19,7 @@ import {
 
 
 import {Gltf2Node} from '../../vendor/render/nodes/gltf2.js';
-//import { VideoboxNode } from "../../vendor/render/nodes/videobox";
+import { VideoboxNode } from "../../vendor/render/nodes/videobox";
 import { InlineViewerHelper } from "../../vendor/util/inline-viewer-helper";
 
 import { mat4, vec3} from '../../vendor/render/math/gl-matrix.js';
@@ -40,10 +40,10 @@ import { VideoNode } from "../../vendor/render/nodes/video";
 import TopNavi from "../../components/TopNavi";
 import { sourceMapsEnabled } from "process";
 
-const  WGLUUrl  = require('../../vendor/wglu/wglu-url.js')
+//const  WGLUUrl  = require('../../vendor/wglu/wglu-url.js')
 //const wglup = require('../../vendor/wglu/wglu-program.js')
 //var vrsup = require('../../vendor/stereo-util.js');
-const {VRStereoUtil } = require('../../vendor/stereo-util.js');
+//const {VRStereoUtil } = require('../../vendor/stereo-util.js');
 
 
 class SoraClient {
@@ -204,7 +204,7 @@ function initWebSocket() {
   // open WebSocket!
   const cws = new WebSocket("wss://sora2.uclab.jp:9001/");
   cws.addEventListener("open", (ev) => {
-      console.log("WebSocket connected", ws);
+      console.log("WebSocket connected", ws, cws);
       // ここで、端末の種別を送るべし
       ws = cws;// グローバル変数を設定
 
@@ -303,17 +303,17 @@ const Page = () => {
 
   const onRequestSession = () => {
     console.log("XR Session Requested")
-/*    videoNode = new VideoboxNode({
-      displayMode: 'stereoTopBottom',
-      rotationY: Math.PI*0.5,
+    videoNode = new VideoboxNode({
+      displayMode: 'stereoLeftRight',
+//      rotationY: Math.PI*0.5,
       video:newVideo
     })
     scene.addNode(videoNode)
-*/
+
     // ビデオのアップデート用
 
     if (navigator.xr) {
-      return navigator.xr.requestSession(isAR ? 'immersive-ar' : 'immersive-vr', { requiredFeatures:['layers'], optionalFeatures: ['local-floor', 'bounded-floor'] }).then((session)=>{
+      return navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor'] }).then((session)=>{
         xrButton.setSession(session);
         onSessionStarted(session);
       });
@@ -330,34 +330,23 @@ const Page = () => {
 //   document.querySelector("header")
 
     if (navigator.xr) {
-      console.log("With XR");
       // How about WebXR
-      navigator.xr.isSessionSupported("immersive-ar").then((supported) => {
-        if (supported){
-          xrButton.enabled = supported;
-          isAR = true;
-        }
-      })
-      if (!isAR){
           navigator.xr.isSessionSupported("immersive-vr").then((supported) => {
             xrButton.enabled = supported;
-            console.log("immersive-vr",supported,isAR)
           })
       }
 
-//      navigator.xr.requestSession("inline").then(onSessionStarted);
-    } else {
-      console.log("No XR");
-    }
   };
 
   
   function onInputSourcesChange(event) {
     onSourcesChange(event, "input_");
+    console.log("On Input Change",event);
   }
 
 
   function onSourcesChange(event, type) {
+    console.log("On Sources Change",event, type);
     for (let inputSource of event.added) {
         if (inputSource.targetRayMode == 'tracked-pointer') {
             fetchProfile(inputSource, DEFAULT_PROFILES_PATH).then(({ profile, assetPath }) => {
@@ -372,6 +361,7 @@ function updateInputSources(session, frame, refSpace) {
 }
 
 function updateSources(session, frame, refSpace, sources, type) {
+  console.log("UpdateSource", session, frame, sources, type );
   if (session.visibilityState === 'visible-blurred') {
       return;
   }
@@ -476,8 +466,8 @@ function updateSources(session, frame, refSpace, sources, type) {
     renderer = new Renderer(gl);
     scene.setRenderer(renderer);
 
-    stereoUtil = new VRStereoUtil(gl);
-    console.log("StereoUtil",stereoUtil)
+//    stereoUtil = new VRStereoUtil(gl);
+//    console.log("StereoUtil",stereoUtil)
 
   }
 
@@ -504,6 +494,7 @@ function updateSources(session, frame, refSpace, sources, type) {
 
     initGL();
 
+
     setInterval(function () {
       if (newVideo)
         if (newVideo.readyState >= newVideo.HAVE_CURRENT_DATA) {
@@ -514,13 +505,14 @@ function updateSources(session, frame, refSpace, sources, type) {
     initButtons()
 
 
-    xrFramebuffer = gl.createFramebuffer();
-    xrGLFactory = new XRWebGLBinding(session, gl);
+//    xrFramebuffer = gl.createFramebuffer();
+//    xrGLFactory = new XRWebGLBinding(session, gl);
+    let glLayer = new XRWebGLLayer(session, gl);
 
-    console.log("XR WebGLWork!",xrGLFactory)
-    if (xrGLFactory == null){
-      session.end()
-    }
+//    console.log("XR WebGLWork!",xrGLFactory)
+//    if (xrGLFactory == null){
+//      session.end()
+//    }
 
     session.addEventListener("end", onSessionEnded);
 
@@ -542,13 +534,16 @@ function updateSources(session, frame, refSpace, sources, type) {
 */
  
     scene.inputRenderer.useProfileControllerMeshes(session);
-    let glLayer = new XRWebGLLayer(session, gl);
+//    let glLayer = new XRWebGLLayer(session, gl);
 //    session.updateRenderState({ baseLayer: glLayer });
 
 //    let refSpaceType = session.isImmersive ? "local" : "viewer";
     let refSpaceType = "local";
     session.requestReferenceSpace(refSpaceType).then((refSpace: any) => {
+      xrImmersiveRefSpace = refSpace;
+
       xrRefSpace = refSpace.getOffsetReferenceSpace(new XRRigidTransform({x:0,y:0,z:0}));
+/*
 
       projLayer = xrGLFactory.createProjectionLayer({ space: refSpace, stencil: false });
       var spc = {
@@ -561,12 +556,13 @@ function updateSources(session, frame, refSpace, sources, type) {
       eqrtLayer = xrGLFactory.createEquirectLayer(spc);
 
       eqrtLayer.centralHorizontalAngle = Math.PI*150/180 ;//* 180 /*eqrtVideoAngle*/ // 180;
-      eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.8;
+/*      eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.8;
       eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.8;
       eqrtLayer.radius = 30; // eqrtRadius;
-
+*/
       console.log("Request Update State");
-      session.updateRenderState({ layers: [eqrtLayer, projLayer] });
+//      session.updateRenderState({ layers: [eqrtLayer, projLayer] });
+      session.updateRenderState({baseLayer:glLayer})
       session.requestAnimationFrame(onXRFrame);
 
     })
@@ -590,49 +586,30 @@ function updateSources(session, frame, refSpace, sources, type) {
 
     scene.startFrame();
     session.requestAnimationFrame(onXRFrame);
-    if (eqrtLayer && (eqrtVideoNeedsUpdate || eqrtLayer.needsRedraw)) {
-      eqrtVideoNeedsUpdate = false;
-      let glayer = xrGLFactory.getSubImage(eqrtLayer, frame);
 
-      // TEXTURE_CUBE_MAP expects the Y to be flipped for the faces and it already
-      // is flipped in our texture image.
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-      gl.bindTexture(gl.TEXTURE_2D, glayer.colorTexture);
-//      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, eqrtVideoWidth, eqrtVideoHeight, gl.RGBA, gl.UNSIGNED_BYTE, newVideo);
-//console.log(newVideo.width,newVideo.height)
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1920, 520, gl.RGBA, gl.UNSIGNED_BYTE, newVideo);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-    updateInputSources(session,frame, xrRefSpace)
+    let refSpace = xrImmersiveRefSpace ;
 
-    //    console.log(frame, session, xrRefSpace)
-    let pose = frame.getViewerPose(xrRefSpace);
+    let glLayer = session.renderState.baseLayer;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    let pose = frame.getViewerPose(refSpace);
+
     if (pose) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, xrFramebuffer);
-      gl.invalidateFramebuffer(gl.FRAMEBUFFER, [gl.COLOR_ATTACHMENT0, gl.DEPTH_ATTACHMENT]);
-
-   //   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       let views = [];
-      menuSystem.processInput(frame, scene, xrRefSpace);
-//      console.log("View.len", pose.views.length)
-//      let viewCount = 0;
       for (let view of pose.views) {
 
-        let viewport = null;
-        let glLayer = xrGLFactory.getViewSubImage(projLayer, view);
-//        console.log(viewCount, glLayer)
-        glLayer.framebuffer = xrFramebuffer;
-        viewport = glLayer.viewport;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, xrFramebuffer);
-//        console.log("colorText:",glLayer.colorTexture)
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, glLayer.colorTexture, 0);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, glLayer.depthStencilTexture, 0);
-        views.push(new WebXRView(view, glLayer, viewport));
-//        viewCount += 1
-      }
-      scene.drawViewArray(views);
-    }
+        let renderView = new WebXRView(view, glLayer);
 
+        renderView.eye = view.eye
+        views.push(renderView);
+      }
+
+      scene.updateInputSources(frame, refSpace);
+
+      scene.drawViewArray(views);
+
+    }
    
     scene.endFrame();
   }
@@ -655,7 +632,7 @@ function updateSources(session, frame, refSpace, sources, type) {
   return (
     <header>
       <div>
-        <h1>VR with Sora</h1>
+        <h1>VR for AppleVisionPro</h1>
         <div>
           <button onClick={connectSora}>connect</button>
           <button onClick={disconnectSora}>stop</button>

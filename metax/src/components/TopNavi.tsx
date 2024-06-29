@@ -12,6 +12,7 @@ export default (props) => {
             {/*                    <Nav.Link href="/#/home"> Home </Nav.Link>
                     <Nav.Link href="/#/info"> Info </Nav.Link>
                     <Nav.Link href="/#/vr"> VR </Nav.Link>
+                    <Nav.Link href="/#/vr_novideo"> VR NoVideo</Nav.Link>
                     <Nav.Link href="/#/flatVideo">flatVideo</Nav.Link>
                     <Nav.Link href="/#/autovr"> AutoVR </Nav.Link>
                     <Nav.Link href="/#/skyway"> Skyway </Nav.Link>
@@ -22,6 +23,9 @@ export default (props) => {
     */}
             <Nav.Link href="/sora"> Home </Nav.Link>
             <Nav.Link href="/vr"> WithVR </Nav.Link>
+            <Nav.Link href="/vr_novideo"> VR_NoVideo </Nav.Link>
+            <Nav.Link href="/vr_wide"> VR_Wide </Nav.Link>
+            <Nav.Link href="/vr_avp"> VisionPro </Nav.Link>
             <Nav.Link href="/recvonly"> Video </Nav.Link>
             <Nav.Link href="/sendonly"> Send </Nav.Link>
           </Nav>
