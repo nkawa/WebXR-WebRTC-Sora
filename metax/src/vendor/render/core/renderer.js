@@ -22,6 +22,7 @@ import {CAP, MAT_STATE, RENDER_ORDER, stateToBlendFunc} from './material.js';
 import {Node} from './node.js';
 import {Program} from './program.js';
 import {DataTexture, VideoTexture} from './texture.js';
+import {VideoBoxTexture} from '../nodes/videobox.js';
 import {mat4, vec3} from 'gl-matrix';
 
 export const ATTRIB = {
@@ -687,11 +688,13 @@ export class Renderer {
       if (primitive._activeFrameId != this._frameId) {
         continue;
       }
+//      console.log("drawRenderPrimitive", primitive)
 
       // Bind the primitive material's program if it's different than the one we
       // were using for the previous primitive.
       // TODO: The ording of this could be more efficient.
       if (program != primitive._material._program) {
+//        console.log("Use Program on ", primitive._material)
         program = primitive._material._program;
         program.use();
 
@@ -797,7 +800,7 @@ export class Renderer {
       throw new Error('Texure does not have a valid key');
     }
 
-    if (key in this._textureCache) {
+    if (key in this._textureCache ) { // Very important for Video!
       return this._textureCache[key];
     } else {
       let gl = this._gl;
@@ -807,29 +810,48 @@ export class Renderer {
       this._textureCache[key] = renderTexture;
 
       if (texture instanceof DataTexture) {
+        console.log("DataTExture", texture)
         gl.bindTexture(gl.TEXTURE_2D, textureHandle);
         gl.texImage2D(gl.TEXTURE_2D, 0, texture.format, texture.width, texture.height,
                                      0, texture.format, texture._type, texture._data);
         this._setSamplerParameters(texture);
         renderTexture._complete = true;
       } else {
+        console.log("Non data TExture", texture.source)
         texture.waitForComplete().then(() => {
           gl.bindTexture(gl.TEXTURE_2D, textureHandle);
+//          gl.texImage2D(gl.TEXTURE_2D, 0, texture.format, texture.width, texture.height,0, texture.format, gl.UNSIGNED_BYTE, texture.source);
           gl.texImage2D(gl.TEXTURE_2D, 0, texture.format, texture.format, gl.UNSIGNED_BYTE, texture.source);
           this._setSamplerParameters(texture);
           renderTexture._complete = true;
 
-          if (texture instanceof VideoTexture) {
+          if (texture instanceof VideoBoxTexture ) { //import {DataTexture, VideoTexture} from './texture.js';
+            console.log("Set Videobox Update");
             // Once the video starts playing, set a callback to update it's
             // contents each frame.
+            texture._video.updateTexture = ()=>{
+              if (!texture._video.paused && !texture._video.waiting) {
+//                let textureHandle = gl.createTexture();
+//                console.log("Upd texture", textureHandle,texture.source)
+                gl.bindTexture(gl.TEXTURE_2D, textureHandle);
+                // webgl1 or 2
+                gl.texImage2D(gl.TEXTURE_2D, 0, texture.format, texture.format, gl.UNSIGNED_BYTE, texture.source);
+//                gl.texImage2D(gl.TEXTURE_2D, 0, texture.format, texture.width, texture.height,0, texture.format, gl.UNSIGNED_BYTE, texture.source);
+              }
+            }
+/*
             texture._video.addEventListener('playing', () => {
+              console.log("Playing ...")
+              
               renderTexture._activeCallback = () => {
                 if (!texture._video.paused && !texture._video.waiting) {
+                  console.log("Set Videobox active Callback");
                   gl.bindTexture(gl.TEXTURE_2D, textureHandle);
                   gl.texImage2D(gl.TEXTURE_2D, 0, texture.format, texture.format, gl.UNSIGNED_BYTE, texture.source);
                 }
               };
-            });
+            })
+            */
           }
         });
       }

@@ -25,7 +25,7 @@ import { InlineViewerHelper } from "../../vendor/util/inline-viewer-helper";
 import { mat4, vec3} from '../../vendor/render/math/gl-matrix.js';
 import { Ray } from '../../vendor/render/math/ray.js';
 
-import { MenuSystem } from '../../vendor/render/nodes/menu-system.js';
+//import { MenuSystem } from '../../vendor/render/nodes/menu-system.js';
 
 
 import { fetchProfile, MotionController } from '@webxr-input-profiles/motion-controllers'
@@ -35,10 +35,10 @@ import { fetchProfile, MotionController } from '@webxr-input-profiles/motion-con
 const DEFAULT_PROFILES_PATH = 'https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles';
 
 
-import { VideoNode } from "../../vendor/render/nodes/video";
+//import { VideoNode } from "../../vendor/render/nodes/video";
 
-import TopNavi from "../../components/TopNavi";
-import { sourceMapsEnabled } from "process";
+//import TopNavi from "../../components/TopNavi";
+//import { sourceMapsEnabled } from "process";
 
 //const  WGLUUrl  = require('../../vendor/wglu/wglu-url.js')
 //const wglup = require('../../vendor/wglu/wglu-program.js')
@@ -274,6 +274,10 @@ let person = null;
 let xrButton: any = null;
 let xrRefSpace :any  = null;
 
+let radii = new Float32Array(25); // for finger radius
+let positions = new Float32Array(16*25);
+
+
 let lastSent = 0;
 
 let xrFramebuffer = null;
@@ -303,17 +307,11 @@ const Page = () => {
 
   const onRequestSession = () => {
     console.log("XR Session Requested")
-    videoNode = new VideoboxNode({
-      displayMode: 'stereoLeftRight',
-//      rotationY: Math.PI*0.5,
-      video:newVideo
-    })
-    scene.addNode(videoNode)
 
     // ビデオのアップデート用
 
     if (navigator.xr) {
-      return navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor'] }).then((session)=>{
+      return navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor','hand-tracking'] }).then((session)=>{
         xrButton.setSession(session);
         onSessionStarted(session);
       });
@@ -341,19 +339,20 @@ const Page = () => {
   
   function onInputSourcesChange(event) {
     onSourcesChange(event, "input_");
-    console.log("On Input Change",event);
+//    console.log("On Input Change",event);
   }
 
 
   function onSourcesChange(event, type) {
-    console.log("On Sources Change",event, type);
-    for (let inputSource of event.added) {
-        if (inputSource.targetRayMode == 'tracked-pointer') {
-            fetchProfile(inputSource, DEFAULT_PROFILES_PATH).then(({ profile, assetPath }) => {
-                scene.inputRenderer.setControllerMesh(new Gltf2Node({ url: assetPath }), inputSource.handedness, inputSource.profiles[0]);
-            });
-        }
-    }
+  //  console.log("On Sources Change",event, type);
+  //  for (let inputSource of event.added) {
+  //    if (inputSource.targetRayMode == 'transient-pointer') {
+//      if (inputSource.targetRayMode == 'tracked-pointer') {
+  //          fetchProfile(inputSource, DEFAULT_PROFILES_PATH).then(({ profile, assetPath }) => {
+  //              scene.inputRenderer.setControllerMesh(new Gltf2Node({ url: assetPath }), inputSource.handedness, inputSource.profiles[0]);
+  //          });
+  //      }
+  //  }
 }
 
 function updateInputSources(session, frame, refSpace) {
@@ -361,10 +360,11 @@ function updateInputSources(session, frame, refSpace) {
 }
 
 function updateSources(session, frame, refSpace, sources, type) {
-  console.log("UpdateSource", session, frame, sources, type );
   if (session.visibilityState === 'visible-blurred') {
       return;
   }
+//  console.log("UpdateSource", sources.length, type );
+
   for (let inputSource of sources) {
       let hand_type = type + inputSource.handedness;
       if (type == "input_") {
@@ -389,7 +389,7 @@ function updateSources(session, frame, refSpace, sources, type) {
                   targetRay.direction.z * cursorDistance,
               ]);
               //                        console.log("hand_type", hand_type)
-              if (hand_type == "input_right") {
+              if (hand_type == "input_right") {// 右手のみ
                   const now = Date.now()
                   if (now - lastSent > 40) {
                       let gamepad = inputSource.gamepad
@@ -431,7 +431,7 @@ function updateSources(session, frame, refSpace, sources, type) {
               scene.inputRenderer.addCursor(cursorPos);
           }
       }
-
+/*
       if (!inputSource.hand && inputSource.gripSpace) {// 手が見えてるか
           let gripPose = frame.getPose(inputSource.gripSpace, refSpace);
           if (gripPose) {// Controller を表示？
@@ -441,7 +441,25 @@ function updateSources(session, frame, refSpace, sources, type) {
 //              scene.inputRenderer.hideController(hand_type);
           }
       }
+      if (inputSource.hand){// 手の時！
+          console.log("Input Hand!", hand_type)
 
+          let pose = frame.getPose(inputSource.targetRaySpace, refSpace);
+          if (pose === undefined) {
+            console.log("no pose");
+          }
+
+          if (!frame.fillJointRadii(inputSource.hand.values(), radii)) {
+            console.log("no fillJointRadii");
+            continue;
+          }
+          if (!frame.fillPoses(inputSource.hand.values(), refSpace, positions)) {
+            console.log("no fillPoses");
+            continue;
+          }
+
+      }
+*/
   }
 }
 
@@ -494,75 +512,46 @@ function updateSources(session, frame, refSpace, sources, type) {
 
     initGL();
 
-
     setInterval(function () {
       if (newVideo)
         if (newVideo.readyState >= newVideo.HAVE_CURRENT_DATA) {
           eqrtVideoNeedsUpdate = true;
+          if(videoNode){
+            videoNode.setMatrixDirty(); // これじゃだめ？            
+          }
         }
       }, 1000 / 30);
 
-    initButtons()
+//    initButtons()
 
-
-//    xrFramebuffer = gl.createFramebuffer();
-//    xrGLFactory = new XRWebGLBinding(session, gl);
     let glLayer = new XRWebGLLayer(session, gl);
 
-//    console.log("XR WebGLWork!",xrGLFactory)
-//    if (xrGLFactory == null){
-//      session.end()
-//    }
-
     session.addEventListener("end", onSessionEnded);
-
     session.addEventListener('inputsourceschange', onInputSourcesChange);
     initWebSocket()
-/*
-    if (newVideo) {
-      console.log("NewVideo! for Add in Scene",newVideo)
-      videoNode = new VideoboxNode({
-                displayMode: 'stereoTopBottom',
-                rotationY: Math.PI*0.5,
-                video:newVideo
-              })
-      scene.addNode(videoNode)
-//      newVideo = null // 
-    }else{
-      console.log("No video")
-    }
-*/
- 
-    scene.inputRenderer.useProfileControllerMeshes(session);
-//    let glLayer = new XRWebGLLayer(session, gl);
-//    session.updateRenderState({ baseLayer: glLayer });
 
-//    let refSpaceType = session.isImmersive ? "local" : "viewer";
+    scene.inputRenderer.useProfileControllerMeshes(session);
+
     let refSpaceType = "local";
     session.requestReferenceSpace(refSpaceType).then((refSpace: any) => {
       xrImmersiveRefSpace = refSpace;
 
       xrRefSpace = refSpace.getOffsetReferenceSpace(new XRRigidTransform({x:0,y:0,z:0}));
-/*
 
-      projLayer = xrGLFactory.createProjectionLayer({ space: refSpace, stencil: false });
-      var spc = {
-        space: refSpace,
-        viewPixelWidth: eqrtVideoWidth / (eqrtVideoLayout === "stereo-left-right" ? 2 : 1),
-        viewPixelHeight: eqrtVideoHeight / (eqrtVideoLayout === "stereo-top-bottom" ? 2 : 1),
-        layout: eqrtVideoLayout,
-      }
-      console.log("Space",spc)
-      eqrtLayer = xrGLFactory.createEquirectLayer(spc);
+    if (newVideo){
+      console.log("Add Video Node");
+      videoNode = new VideoboxNode({
+        displayMode: 'stereoLeftRight',
+//      rotationY: Math.PI*0.5,
+        video:newVideo
+      });
+      scene.addNode(videoNode);
+      console.log("Add Video Done");
+    }else{
+      console.log("No Video");
+    }
 
-      eqrtLayer.centralHorizontalAngle = Math.PI*150/180 ;//* 180 /*eqrtVideoAngle*/ // 180;
-/*      eqrtLayer.upperVerticalAngle = Math.PI / 2.0 - 0.8;
-      eqrtLayer.lowerVerticalAngle = -Math.PI / 2.0 +0.8;
-      eqrtLayer.radius = 30; // eqrtRadius;
-*/
-      console.log("Request Update State");
-//      session.updateRenderState({ layers: [eqrtLayer, projLayer] });
-      session.updateRenderState({baseLayer:glLayer})
+        session.updateRenderState({baseLayer:glLayer})
       session.requestAnimationFrame(onXRFrame);
 
     })
@@ -583,7 +572,8 @@ function updateSources(session, frame, refSpace, sources, type) {
   //ここでポーズ更新
   function onXRFrame(t:DOMHighResTimeStamp, frame:XRFrame) {
     let session = frame.session;
-
+  
+//    console.log("Start onXRFrame");
     scene.startFrame();
     session.requestAnimationFrame(onXRFrame);
 
@@ -593,10 +583,14 @@ function updateSources(session, frame, refSpace, sources, type) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    updateInputSources(session, frame, refSpace);
+
     let pose = frame.getViewerPose(refSpace);
 
     if (pose) {
       let views = [];
+//      menuSystem.processInput(frame, scene, refSpace);
+
       for (let view of pose.views) {
 
         let renderView = new WebXRView(view, glLayer);
@@ -635,8 +629,8 @@ function updateSources(session, frame, refSpace, sources, type) {
         <h1>VR for AppleVisionPro</h1>
         <div>
           <button onClick={connectSora}>connect</button>
+
           <button onClick={disconnectSora}>stop</button>
-          <button onClick={checkVideo}>checkVideo</button>
           <div id="xrbutton"></div>
           <br />
           <div id="remote-videos"></div>

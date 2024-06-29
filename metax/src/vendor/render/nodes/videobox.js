@@ -30,7 +30,7 @@ import {Texture} from '../core/texture';
 const GL = WebGLRenderingContext; // For enums
 
 
-class VideoBoxTexture extends Texture {
+export class VideoBoxTexture extends Texture {
   constructor(video) {
     super();
 
@@ -54,16 +54,16 @@ class VideoBoxTexture extends Texture {
 
   get format() {
     // TODO: Can be RGB in some cases.
-    return GL.RGBA;
+    return GL.RGB;
   }
 
   get width() {
-    return 1980;
+  //  return 1980;
     return this._video.videoWidth;
   }
 
   get height() {
-    return 2000;
+//    return 2000;
 
     return this._video.videoHeight;
   }
@@ -73,7 +73,7 @@ class VideoBoxTexture extends Texture {
   }
 
   get textureKey() {
-    return "webxr-rtc";
+    return "rtc";
   }
 
   get source() {
@@ -97,10 +97,11 @@ class VideoboxMaterial extends Material {
   }
 
   get materialName() {
-    return 'VIDEO_PLAYER';
+    return 'VideoBoxMaterial';
   }
 
   get vertexSource() {
+    console.log("VideoBox Virtex")
     return `
     uniform int EYE_INDEX;
     uniform vec4 texCoordScaleOffset[2];
@@ -136,13 +137,25 @@ class VideoboxMaterial extends Material {
 export class VideoboxNode extends Node {
   constructor(options) {
     super();
-
+    this._material = null;
     this._url = options.video.src;
     this._video= options.video;
     this._video_texture =new VideoBoxTexture(this._video);
 //    this._video_texture.textureKey="webrtc-vr";
     this._displayMode = options.displayMode || 'mono';
     this._rotationY = options.rotationY ||  Math.PI;
+  }
+  onUpdate(timestamp, frameDelta) {
+ //   console.log("VideoBox: OnUpdate", timestamp, frameDelta)
+//    this._video_texture =new VideoBoxTexture(this._video);
+//    console.log("upd:",this._material)
+//    console.log("upd:",this._video_texture)
+//      this.renderPrimitives[0]
+//      console.log("video",this._video.readyState, this._video.playbackRate, this._video.currentTime, this._video.paused)
+      if (this._video.paused){
+        this._video.play();
+      }
+      this._video.updateTexture();
   }
 
   onRendererChanged(renderer) {
@@ -155,7 +168,7 @@ export class VideoboxNode extends Node {
 
     // Create the vertices/indices
     for (let i=0; i <= latSegments; ++i) {
-      let theta = i * Math.PI / latSegments;
+      let theta = Math.PI*40/180+ i * Math.PI *(100/180 )/ latSegments; // up-down 100 degree...
       let sinTheta = Math.sin(theta);
       let cosTheta = Math.cos(theta);
 
@@ -163,7 +176,7 @@ export class VideoboxNode extends Node {
       let idxOffsetB = (i+1) * (lonSegments+1);
 
       for (let j=0; j <= lonSegments; ++j) {
-        let phi = (j * 2 * Math.PI / lonSegments) + this._rotationY;
+        let phi = (j * 2 * Math.PI *(170/360) / lonSegments) + this._rotationY + Math.PI*180/360; // left-right 150 degree
         let x = Math.sin(phi) * sinTheta*10;
         let y = cosTheta *10;
         let z = -Math.cos(phi) * sinTheta*10;
@@ -188,33 +201,33 @@ export class VideoboxNode extends Node {
     let indexBuffer = renderer.createRenderBuffer(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices));
 
     let attribs = [
-      new PrimitiveAttribute('POSITION', vertexBuffer, 3, GL.FLOAT, 20, 0),
+      new PrimitiveAttribute('\POSITION', vertexBuffer, 3, GL.FLOAT, 20, 0),
       new PrimitiveAttribute('TEXCOORD_0', vertexBuffer, 2, GL.FLOAT, 20, 12),
     ];
 
     let primitive = new Primitive(attribs, indices.length);
     primitive.setIndexBuffer(indexBuffer);
 
-    let material = new VideoboxMaterial();
-    material.image.texture = this._video_texture;
-    console.log("Material",material);
+    this._material = new VideoboxMaterial();
+    this._material.image.texture = this._video_texture;
+    console.log("Material",this._material);
 
     switch (this._displayMode) {
       case 'mono':
-        material.texCoordScaleOffset.value = [1.0, 1.0, 0.0, 0.0,
+        this._material.texCoordScaleOffset.value = [1.0, 1.0, 0.0, 0.0,
                                               1.0, 1.0, 0.0, 0.0];
         break;
       case 'stereoTopBottom':
-        material.texCoordScaleOffset.value = [1.0, 0.5, 0.0, 0.0,
+        this._material.texCoordScaleOffset.value = [1.0, 0.5, 0.0, 0.0,
                                               1.0, 0.5, 0.0, 0.5];
         break;
       case 'stereoLeftRight':
-        material.texCoordScaleOffset.value = [0.5, 1.0, 0.0, 0.0,
+        this._material.texCoordScaleOffset.value = [0.5, 1.0, 0.0, 0.0,
                                               0.5, 1.0, 0.5, 0.0];
         break;
     }
 
-    let renderPrimitive = renderer.createRenderPrimitive(primitive, material);
+    let renderPrimitive = renderer.createRenderPrimitive(primitive, this._material);
     this.addRenderPrimitive(renderPrimitive);
   }
 }
