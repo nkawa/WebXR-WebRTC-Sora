@@ -26,6 +26,7 @@ import {Material, RENDER_ORDER} from '../core/material';
 import {Primitive, PrimitiveAttribute} from '../core/primitive';
 import {Node} from '../core/node';
 import {Texture} from '../core/texture';
+import { M_PLUS_1 } from 'next/font/google';
 
 const GL = WebGLRenderingContext; // For enums
 
@@ -153,6 +154,7 @@ export class VideoboxNode extends Node {
 //      this.renderPrimitives[0]
 //      console.log("video",this._video.readyState, this._video.playbackRate, this._video.currentTime, this._video.paused)
       if (this._video.paused){
+        console.log("Video is paused");
         this._video.play();
       }
       this._video.updateTexture();
@@ -166,19 +168,28 @@ export class VideoboxNode extends Node {
     let latSegments = 40;
     let lonSegments = 40;
 
+
+
     // Create the vertices/indices
     for (let i=0; i <= latSegments; ++i) {
-      let theta = Math.PI*40/180+ i * Math.PI *(100/180 )/ latSegments; // up-down 100 degree...
-      let sinTheta = Math.sin(theta);
+      let theta = Math.PI*65/180+ i * Math.PI *(50/180 )/ latSegments; // up-down 100 degree...
+      let sinTheta = Math.sin(theta); // hankei
+//      let sinTheta = 1+(1-Math.sin(theta)); // Math.sin(theta); //Math.sin(theta); // hankei
+          
+//      let cosTheta = Math.cos(theta);
       let cosTheta = Math.cos(theta);
 
       let idxOffsetA = i * (lonSegments+1);
       let idxOffsetB = (i+1) * (lonSegments+1);
-
+      let diff = (1-sinTheta)*300*1.5;
+      console.log("i",i,theta, sinTheta,diff);
+        
       for (let j=0; j <= lonSegments; ++j) {
-        let phi = (j * 2 * Math.PI *(170/360) / lonSegments) + this._rotationY + Math.PI*180/360; // left-right 150 degree
+        // 角度が中心に近いほど、視野を狭める
+        // theta分で考える　ツマリ、 1-Math.sin(theta)0
+        let phi =  (j * 2 * Math.PI *((190+diff)/360) / lonSegments) + this._rotationY + Math.PI*(175-diff)/360; // left-right 150 degree
         let x = Math.sin(phi) * sinTheta*10;
-        let y = cosTheta *10;
+        let y = cosTheta *22;
         let z = -Math.cos(phi) * sinTheta*10;
         let u = (j / lonSegments);
         let v = (i / latSegments);
