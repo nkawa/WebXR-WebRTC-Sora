@@ -628,9 +628,9 @@ function updateSources(session, frame, refSpace, sources, type) {
       <div>
         <h1>VR for AppleVisionPro</h1>
         <div>
-          <button onClick={connectSora}>connect</button>
-
-          <button onClick={disconnectSora}>stop</button>
+          <Button onClick={connectSora} size="lg">connect</Button>
+          　　
+          <Button onClick={disconnectSora} size="lg">stop</Button>
           <div id="xrbutton"></div>
           <br />
           <div id="remote-videos"></div>
