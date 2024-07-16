@@ -27,115 +27,11 @@ import {Primitive, PrimitiveAttribute} from '../core/primitive';
 import {Node} from '../core/node';
 import {Texture} from '../core/texture';
 import { M_PLUS_1 } from 'next/font/google';
+import { VideoBoxTexture, VideoboxMaterial} from './videobox';
 
 const GL = WebGLRenderingContext; // For enums
 
-
-export class VideoBoxTexture extends Texture {
-  constructor(video) {
-    super();
-
-    this._video = video;
-    console.log("video state", video.readyState);
-
-    if (video.readyState >= 2 ) {
-      console.log("Video Starting!")
-      this._promise = Promise.resolve(this);
-    } else if (video.error) {
-      console.log("Video err")
-      this._promise = Promise.reject(video.error);
-    } else {
-      this._promise = new Promise((resolve, reject) => {
-        console.log("Video loaded?",this._video.readyState)
-        video.addEventListener('loadeddata', () => resolve(this));
-        video.addEventListener('error', reject);
-      });
-    }
-  }
-
-  get format() {
-    // TODO: Can be RGB in some cases.
-    return GL.RGB;
-  }
-
-  get width() {
-  //  return 1980;
-    return this._video.videoWidth;
-  }
-
-  get height() {
-//    return 2000;
-
-    return this._video.videoHeight;
-  }
-
-  waitForComplete() {
-    return this._promise;
-  }
-
-  get textureKey() {
-    return "rtc";
-  }
-
-  get source() {
-    return this._video;
-  }
-}
-
-
-export class VideoboxMaterial extends Material {
-  constructor() {
-    super();
-    this.renderOrder = RENDER_ORDER.SKY;
-    this.state.depthFunc = GL.LEQUAL;
-    this.state.depthMask = false;
-
-    this.image = this.defineSampler('diffuse');
-
-    this.texCoordScaleOffset = this.defineUniform('texCoordScaleOffset',
-                                                      [1.0, 1.0, 0.0, 0.0,
-                                                       1.0, 1.0, 0.0, 0.0], 4);
-  }
-
-  get materialName() {
-    return 'VideoBoxMaterial';
-  }
-
-  get vertexSource() {
-    console.log("VideoBox Virtex")
-    return `
-    uniform int EYE_INDEX;
-    uniform vec4 texCoordScaleOffset[2];
-    attribute vec3 POSITION;
-    attribute vec2 TEXCOORD_0;
-    varying vec2 vTexCoord;
-
-    vec4 vertex_main(mat4 proj, mat4 view, mat4 model) {
-      vec4 scaleOffset = texCoordScaleOffset[EYE_INDEX];
-      vTexCoord = (TEXCOORD_0 * scaleOffset.xy) + scaleOffset.zw;
-      // Drop the translation portion of the view matrix
-      view[3].xyz = vec3(0.0, 0.0, 0.0);
-      vec4 out_vec = proj * view * model * vec4(POSITION, 1.0);
-
-      // Returning the W component for both Z and W forces the geometry depth to
-      // the far plane. When combined with a depth func of LEQUAL this makes the
-      // sky write to any depth fragment that has not been written to yet.
-      return out_vec.xyww;
-    }`;
-  }
-
-  get fragmentSource() {
-    return `
-    uniform sampler2D diffuse;
-    varying vec2 vTexCoord;
-
-    vec4 fragment_main() {
-      return texture2D(diffuse, vTexCoord);
-    }`;
-  }
-}
-
-export class VideoboxNode extends Node {
+export class InvVideoboxNode extends Node {
   constructor(options) {
     super();
     this._material = null;
@@ -172,7 +68,7 @@ export class VideoboxNode extends Node {
 
     // Create the vertices/indices
     for (let i=0; i <= latSegments; ++i) {
-      let theta = Math.PI*65/180+ i * Math.PI *(50/180 )/ latSegments; // up-down 100 degree...
+      let theta = Math.PI*15/180+ i * Math.PI *(150/180 )/ latSegments; // up-down 100 degree...
       let sinTheta = Math.sin(theta); // hankei
 //      let sinTheta = 1+(1-Math.sin(theta)); // Math.sin(theta); //Math.sin(theta); // hankei
           
@@ -187,9 +83,9 @@ export class VideoboxNode extends Node {
       for (let j=0; j <= lonSegments; ++j) {
         // 角度が中心に近いほど、視野を狭める
         // theta分で考える　ツマリ、 1-Math.sin(theta)0
-        let phi =  (j * 2 * Math.PI *((190+diff)/360) / lonSegments) + this._rotationY + Math.PI*(175-diff)/360; // left-right 150 degree
+        let phi =  (j * 2 * Math.PI *((170+diff)/360) / lonSegments) + this._rotationY + Math.PI*(180-diff)/360; // left-right 150 degree
         let x = Math.sin(phi) * sinTheta*10;
-        let y = cosTheta *22;
+        let y = cosTheta *15;
         let z = -Math.cos(phi) * sinTheta*10;
         let u = (j / lonSegments);
         let v = (i / latSegments);
@@ -233,13 +129,14 @@ export class VideoboxNode extends Node {
                                               1.0, 0.5, 0.0, 0.5];
         break;
       case 'stereoLeftRight':
-        this._material.texCoordScaleOffset.value = [0.5, 1.0, 0.0, 0.0,
-                                              0.5, 1.0, 0.5, 0.0];
+        this._material.texCoordScaleOffset.value = [0.5, 1.0, 0.5, 0.0,
+                                              0.5, 1.0, 0.0, 0.0];
         break;
-      case 'stereoRightLeft':
-          this._material.texCoordScaleOffset.value = [0.5, 1.0, 0.0, 0.0,
-                                                0.5, 1.0, 0.5, 0.0];
+        case 'stereoRightLeft':
+          this._material.texCoordScaleOffset.value = [0.5, 1.0, 0.5, 0.0,
+                                                0.5, 1.0, 0.0, 0.0];
           break;
+
     }
 
     let renderPrimitive = renderer.createRenderPrimitive(primitive, this._material);

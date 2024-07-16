@@ -22,9 +22,10 @@ export default (props) => {
             <Nav.Link href="/sendrecv"> Send/Recv </Nav.Link>
     */}
             <Nav.Link href="/sora"> Home </Nav.Link>
-            <Nav.Link href="/vr"> WithVR </Nav.Link>
+            <Nav.Link href="/vr"> VR </Nav.Link>
+            <Nav.Link href="/avp_test"> AVP_Test </Nav.Link>
             <Nav.Link href="/vr_novideo"> VR_NoVideo </Nav.Link>
-            <Nav.Link href="/vr_wide"> VR_Wide </Nav.Link>
+            <Nav.Link href="/vr_avp_canon"> AVP_Canon </Nav.Link>
             <Nav.Link href="/vr_avp"> VisionPro </Nav.Link>
             <Nav.Link href="/recvonly"> Video </Nav.Link>
             <Nav.Link href="/sendonly"> Send </Nav.Link>
