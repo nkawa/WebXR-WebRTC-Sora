@@ -25,6 +25,7 @@ export default (props) => {
             <Nav.Link href="/vr"> VR </Nav.Link>
             <Nav.Link href="/avp_test"> AVP_Test </Nav.Link>
             <Nav.Link href="/vr_novideo"> VR_NoVideo </Nav.Link>
+            <Nav.Link href="/vr_no2"> VR_No2 </Nav.Link>
             <Nav.Link href="/vr_avp_canon"> AVP_Canon </Nav.Link>
             <Nav.Link href="/vr_avp"> VisionPro </Nav.Link>
             <Nav.Link href="/recvonly"> Video </Nav.Link>
