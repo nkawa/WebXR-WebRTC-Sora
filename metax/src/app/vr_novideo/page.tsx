@@ -81,7 +81,11 @@ function getDeviceID() {
 
 function initWebSocket() {
   // open WebSocket!
-  const cws = new WebSocket("wss://sora2.uclab.jp:9001/");
+  try {
+    const cws = new WebSocket("wss://sora2.uclab.jp:9001/");
+    cws.addEventListener("error", (ev)=>{
+    console.log("WebSocket wrror", ev);
+  })
   cws.addEventListener("open", (ev) => {
       console.log("WebSocket connected", ws);
       // ここで、端末の種別を送るべし
@@ -121,7 +125,10 @@ function initWebSocket() {
 
 
   }
+  }catch(e){
+    console.log("WebSoket err:", e);
 
+  }
 
 }
 
