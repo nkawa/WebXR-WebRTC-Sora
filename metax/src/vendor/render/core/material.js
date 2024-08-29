@@ -1,4 +1,4 @@
-"use client"
+"use client";
 // Copyright 2018 The Immersive Web Community Group
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +19,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 console.log("material.js loaded")
-const GL = WebGLRenderingContext; // For enums
+const GL = WebGLRenderingContext || null; // For enums
 console.log("material.js Context work?")
 
 export const CAP = {
